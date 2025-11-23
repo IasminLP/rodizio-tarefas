@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Rodízio de Tarefas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h2 class="mb-3">Rodízio de Tarefas</h2>
+
+  <!-- Filtros -->
+  <form id="filtros" class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <label class="form-label">Data</label>
+      <input type="date" id="data" class="form-control" />
+    </div>
+    <div class="col-6 col-md-3">
+      <label class="form-label">Pessoa</label>
+      <select id="pessoa" class="form-select">
+        <option>Todos</option>
+        <option>Papai</option>
+        <option>Mamãe</option>
+        <option>Roninho</option>
+        <option>Iasmin</option>
+        <option>Arthur</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-6 d-flex align-items-end gap-2">
+      <button type="button" class="btn btn-primary" onclick="atualizar()">Atualizar</button>
+      <button type="button" class="btn btn-secondary" onclick="avancarDia()">Avançar Dia</button>
+      <button type="button" class="btn btn-secondary" onclick="avancarSemana()">Avançar Semana</button>
+      <button type="button" class="btn btn-success" onclick="concluirEsporadica()">Concluir Esporádica</button>
+    </div>
+  </form>
+
+  <!-- Aviso -->
+  <div id="aviso" class="alert alert-info d-none"></div>
+
+  <!-- Tabela -->
+  <table class="table table-striped table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Tarefa</th>
+        <th>Responsável</th>
+        <th>Frequência</th>
+      </tr>
+    </thead>
+    <tbody id="tarefas"></tbody>
+  </table>
+</div>
+
+<script>
+const pessoas = ["Papai","Mamãe","Roninho","Iasmin","Arthur"];
+// Construtor local (mês 11 = dezembro) garante segunda-feira
+const dataInicio = new Date(2025, 11, 0);
+let dataAtual = new Date(); // começa com hoje
+
+// Diárias (domingo a sexta)
+const tarefasDiarias = [
+  "Lavar louça e guardar louça",
+  "Limpar fogão e limpar banheiro",
+  "Passar pano na cozinha e arrumar mesa e balcão",
+  "Varrer a casa e tirar poeira",
+  "Limpar o quintal"
+];
+
+// Quinzenais
+const rotacaoQuinzenal = {
+  "Tirar teia de aranha": [
+    ["Papai"], ["Mamãe"], ["Roninho"]
+  ],
+  "Lavar quintal": [
+    ["Mamãe","Roninho"], ["Iasmin","Arthur"], ["Papai","Mamãe"]
+  ],
+  "Limpar coifa": [
+    ["Iasmin"], ["Roninho"], ["Arthur"]
+  ],
+  "Limpar geladeira": [
+    ["Arthur"], ["Papai"], ["Iasmin"]
+  ]
+};
+
+// Mensais
+const rotacaoMensal = {
+  "Lavar geladeira": [
+    ["Papai","Mamãe"], ["Roninho","Iasmin"], ["Arthur","Papai"], ["Mamãe","Roninho"], ["Iasmin","Arthur"]
+  ],
+  "Limpar parede cozinha": [
+    ["Roninho","Iasmin","Arthur"], ["Arthur","Papai","Mamãe"], ["Mamãe","Roninho","Iasmin"], ["Iasmin","Arthur","Papai"], ["Papai","Mamãe","Roninho"]
+  ]
+};
+
+// Esporádica (fila)
+let filaEsporadica = [...pessoas];
+
+function semanaDesdeInicio(data){
+  const dias = Math.floor((data - dataInicio)/(1000*60*60*24));
+  return dias<0?0:Math.floor(dias/7);
+}
+function quinzenaIndex(data){
+  const dias = Math.floor((data - dataInicio)/(1000*60*60*24));
+  return dias<0?0:Math.floor(dias/14)%3;
+}
+function mesesDesdeInicio(data){
+  return (data.getFullYear()-dataInicio.getFullYear())*12 + (data.getMonth()-dataInicio.getMonth());
+}
+
+function gerarTarefas(data,pessoaFiltro="Todos"){
+  const lista=[];
+  const mostrarTodos = pessoaFiltro==="Todos";
+
+  // Diárias: domingo(0) a sexta(5)
+  const diaIndex = data.getDay(); // 0=Dom,1=Seg,2=Ter,3=Qua,4=Qui,5=Sex,6=Sáb
+  const diaTemDiarias = (diaIndex >= 0 && diaIndex <= 5);
+
+  if(diaTemDiarias){
+    const deslocSemana = semanaDesdeInicio(data);
+    for(let i=0;i<tarefasDiarias.length;i++){
+      const tarefa = tarefasDiarias[i];
+      const responsavel = pessoas[(diaIndex+deslocSemana+i)%pessoas.length];
+      if(mostrarTodos || responsavel===pessoaFiltro)
+        lista.push({nome:tarefa,responsavel:responsavel,frequencia:"Diária"});
+    }
+  }
+
+  // Quinzenais
+  const idxQ = quinzenaIndex(data);
+  for(const tarefa in rotacaoQuinzenal){
+    const responsaveis = rotacaoQuinzenal[tarefa][idxQ];
+    const nomes = responsaveis.join(" + ");
+    if(mostrarTodos || responsaveis.includes(pessoaFiltro))
+      lista.push({nome:tarefa,responsavel:nomes,frequencia:"Quinzenal"});
+  }
+
+  // Mensais
+  const meses = mesesDesdeInicio(data);
+  for(const tarefa in rotacaoMensal){
+    const seq = rotacaoMensal[tarefa];
+    const responsaveis = seq[meses%seq.length];
+    const nomes = responsaveis.join(" + ");
+    if(mostrarTodos || responsaveis.includes(pessoaFiltro))
+      lista.push({nome:tarefa,responsavel:nomes,frequencia:"Mensal"});
+  }
+
+  // Esporádica
+  const espAtual = filaEsporadica[0];
+  if(mostrarTodos || espAtual===pessoaFiltro)
+    lista.push({nome:"Guardar compras",responsavel:espAtual,frequencia:"Esporádica"});
+
+  return lista;
+}
+
+function atualizar(){
+  const dataStr = document.getElementById("data").value || new Date().toISOString().split("T")[0];
+  dataAtual = new Date(dataStr);
+  const pessoa = document.getElementById("pessoa").value;
+  const lista = gerarTarefas(dataAtual,pessoa);
+
+  // Aviso quando não houver diárias (sábado)
+  const aviso = document.getElementById("aviso");
+  const diaIndex = dataAtual.getDay();
+  if (diaIndex === 6) {
+    aviso.textContent = "Domingo: sem tarefas diárias (o rodízio vai de Segunda à Sexta).";
+    aviso.classList.remove("d-none");
+  } else {
+    aviso.classList.add("d-none");
+    aviso.textContent = "";
+  }
+
+  const tbody=document.getElementById("tarefas");
+  tbody.innerHTML="";
+  lista.forEach(t=>{
+    let bg="";
+    if(t.frequencia==="Diária") bg="table-primary";
+    else if(t.frequencia==="Quinzenal") bg="table-success";
+    else if(t.frequencia==="Mensal") bg="table-danger";
+    else if(t.frequencia==="Esporádica") bg="table-secondary";
+    const tr=document.createElement("tr");
+    tr.className=bg;
+    tr.innerHTML=`<td>${t.nome}</td><td>${t.responsavel}</td><td>${t.frequencia}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function avancarDia(){
+  dataAtual.setDate(dataAtual.getDate()+1);
+  document.getElementById("data").value = dataAtual.toISOString().split("T")[0];
+  atualizar();
+}
+
+function avancarSemana(){
+  dataAtual.setDate(dataAtual.getDate()+7);
+  document.getElementById("data").value = dataAtual.toISOString().split("T")[0];
+  atualizar();
+}
+
+function concluirEsporadica(){
+  const concluinte = filaEsporadica.shift();
+  filaEsporadica.push(concluinte);
+  atualizar();
+}
+
+// Inicializa com hoje
+document.getElementById("data").value = new Date().toISOString().split("T")[0];
+atualizar();
+</script>
+</body>
+</html>
