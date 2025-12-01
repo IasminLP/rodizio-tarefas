@@ -166,11 +166,11 @@ function atualizar(){
   const pessoa = document.getElementById("pessoa").value;
   const lista = gerarTarefas(dataAtual,pessoa);
 
-  // Aviso quando não houver diárias (sábado)
+  // Aviso quando não houver diárias (domingo)
   const aviso = document.getElementById("aviso");
   const diaIndex = dataAtual.getDay();
   if (diaIndex === 6) {
-    aviso.textContent = "Sábado: sem tarefas diárias (o rodízio vai de domingo a sexta).";
+    aviso.textContent = "Domingo: sem tarefas diárias (o rodízio vai de domingo a sexta).";
     aviso.classList.remove("d-none");
   } else {
     aviso.classList.add("d-none");
@@ -216,4 +216,5 @@ atualizar();
 </script>
 </body>
 </html>
+
 
