@@ -53,7 +53,7 @@
 
 <script>
 const pessoas = ["Papai","Mamãe","Roninho","Iasmin","Arthur"];
-// Construtor local (mês 11 = dezembro) garante segunda-feira
+// Mantém como estava
 const dataInicio = new Date(2025, 11, 0);
 let dataAtual = new Date(); // começa com hoje
 
@@ -66,29 +66,37 @@ const tarefasDiarias = [
   "Limpar o quintal"
 ];
 
-// Quinzenais
+// Quinzenais (atualizadas)
 const rotacaoQuinzenal = {
   "Tirar teia de aranha": [
-    ["Papai"], ["Mamãe"], ["Roninho"]
+    ["Papai"], ["Mamãe"], ["Roninho"], ["Iasmin"], ["Arthur"]
   ],
   "Lavar quintal": [
-    ["Mamãe","Roninho"], ["Iasmin","Arthur"], ["Papai","Mamãe"]
+    ["Mamãe","Roninho"], ["Iasmin","Arthur"], ["Papai","Mamãe"], ["Roninho","Iasmin"], ["Arthur","Papai"]
   ],
   "Limpar coifa": [
-    ["Iasmin"], ["Roninho"], ["Arthur"]
+    ["Iasmin"], ["Papai"], ["Arthur"], ["Mamãe"], ["Roninho"]
   ],
   "Limpar geladeira": [
-    ["Arthur"], ["Papai"], ["Iasmin"]
+    ["Arthur"], ["Roninho"], ["Iasmin"], ["Papai"], ["Mamãe"]
   ]
 };
 
-// Mensais
+// Mensais (atualizadas)
 const rotacaoMensal = {
   "Lavar geladeira": [
-    ["Papai","Mamãe"], ["Roninho","Iasmin"], ["Arthur","Papai"], ["Mamãe","Roninho"], ["Iasmin","Arthur"]
+    ["Papai","Mamãe"], 
+    ["Roninho","Iasmin"], 
+    ["Arthur","Papai"], 
+    ["Mamãe","Roninho"], 
+    ["Iasmin","Arthur"]
   ],
   "Limpar parede cozinha": [
-    ["Roninho","Iasmin","Arthur"], ["Arthur","Papai","Mamãe"], ["Mamãe","Roninho","Iasmin"], ["Iasmin","Arthur","Papai"], ["Papai","Mamãe","Roninho"]
+    ["Roninho","Iasmin","Arthur"], 
+    ["Papai","Mamãe","Arthur"], 
+    ["Mamãe","Roninho","Iasmin"], 
+    ["Papai","Iasmin","Arthur"], 
+    ["Papai","Mamãe","Roninho"]
   ]
 };
 
@@ -101,7 +109,7 @@ function semanaDesdeInicio(data){
 }
 function quinzenaIndex(data){
   const dias = Math.floor((data - dataInicio)/(1000*60*60*24));
-  return dias<0?0:Math.floor(dias/14)%3;
+  return dias<0?0:Math.floor(dias/14)%5; // 5 ciclos
 }
 function mesesDesdeInicio(data){
   return (data.getFullYear()-dataInicio.getFullYear())*12 + (data.getMonth()-dataInicio.getMonth());
@@ -162,7 +170,7 @@ function atualizar(){
   const aviso = document.getElementById("aviso");
   const diaIndex = dataAtual.getDay();
   if (diaIndex === 6) {
-    aviso.textContent = "Domingo: sem tarefas diárias (o rodízio vai de Segunda à Sexta).";
+    aviso.textContent = "Sábado: sem tarefas diárias (o rodízio vai de domingo a sexta).";
     aviso.classList.remove("d-none");
   } else {
     aviso.classList.add("d-none");
@@ -208,3 +216,4 @@ atualizar();
 </script>
 </body>
 </html>
+
